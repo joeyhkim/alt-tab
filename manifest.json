@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Alt Tab",
+  "version": "1.0.0",
+  "description": "Switch between the two most recently viewed tabs.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Switch to the other recent tab"
+  },
+  "commands": {
+    "_execute_action": {}
+  }
+}
