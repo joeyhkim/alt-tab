@@ -1,0 +1,218 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f3;
+  --panel: #ffffff;
+  --panel-border: #d9ddd3;
+  --text: #172018;
+  --muted: #5f675d;
+  --accent: #1f6b4f;
+  --accent-strong: #174f3b;
+  --accent-soft: #e8f3ed;
+  --danger: #a53f32;
+  --danger-soft: #f8ebe7;
+  --shadow: 0 12px 28px rgba(23, 32, 24, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+  background:
+    radial-gradient(circle at top left, rgba(31, 107, 79, 0.08), transparent 40%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.4 "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+code {
+  font-family: "SF Mono", "Consolas", monospace;
+  font-size: 0.92em;
+}
+
+.popup {
+  padding: 14px;
+}
+
+.panel {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.panel:last-child {
+  margin-bottom: 0;
+}
+
+.panel__header {
+  margin-bottom: 8px;
+}
+
+.panel__header--inline {
+  margin-bottom: 12px;
+}
+
+.panel__header h1,
+.panel__header h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.mapping-form {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.shortcut-input {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: #fcfcfa;
+  overflow: hidden;
+}
+
+.shortcut-input:focus-within {
+  outline: 2px solid rgba(31, 107, 79, 0.2);
+  border-color: var(--accent);
+}
+
+.shortcut-input__prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0 0 12px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: #fcfcfa;
+  color: var(--text);
+  font: inherit;
+}
+
+input:focus {
+  outline: 2px solid rgba(31, 107, 79, 0.2);
+  border-color: var(--accent);
+}
+
+.shortcut-input input {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+}
+
+.shortcut-input input:focus {
+  outline: none;
+  border-color: transparent;
+}
+
+.button {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.button--primary:hover {
+  background: var(--accent-strong);
+}
+
+.button--danger {
+  padding: 8px 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.status {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status--error {
+  color: var(--danger);
+}
+
+.mappings-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapping-item {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: #fcfcfa;
+}
+
+.mapping-item__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.mapping-item__text {
+  min-width: 0;
+}
+
+.mapping-item__label {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mapping-item__value {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.empty-state {
+  padding: 16px;
+  border: 1px dashed var(--panel-border);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
+}

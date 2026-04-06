@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alt Tab</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <section class="panel">
+        <div class="panel__header">
+          <h1>Shortcut URLs</h1>
+        </div>
+        <form id="mapping-form" class="mapping-form">
+          <label class="field">
+            <span class="field__label">Shortcut URL</span>
+            <div class="shortcut-input">
+              <span class="shortcut-input__prefix">http://</span>
+              <input
+                id="source-input"
+                name="source"
+                type="text"
+                autocomplete="off"
+                required
+              />
+            </div>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Redirect to</span>
+            <input
+              id="target-input"
+              name="target"
+              type="url"
+              autocomplete="off"
+              required
+            />
+          </label>
+
+          <button class="button button--primary" type="submit">Save Mapping</button>
+        </form>
+
+        <p id="status" class="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header panel__header--inline">
+          <h2>Saved Mappings</h2>
+        </div>
+        <ul id="mappings-list" class="mappings-list"></ul>
+      </section>
+    </main>
+
+    <script src="popup.js" defer></script>
+  </body>
+</html>

@@ -1,5 +1,8 @@
 const RECENT_TABS_KEY = "recentTabs";
+const URL_MAPPINGS_KEY = "urlMappings";
 const MAX_RECENT_TABS = 2;
+const HTTP_PROTOCOLS = new Set(["http:", "https:"]);
+const REDIRECT_RULE_ID_START = 1;
 
 function isValidTabId(tabId) {
   return Number.isInteger(tabId) && tabId >= 0;
@@ -7,6 +10,78 @@ function isValidTabId(tabId) {
 
 function isValidWindowId(windowId) {
   return Number.isInteger(windowId) && windowId >= 0;
+}
+
+function normalizeUrl(rawValue, { allowBareHost = false } = {}) {
+  if (typeof rawValue !== "string") {
+    return null;
+  }
+
+  const trimmedValue = rawValue.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  const candidate = allowBareHost && !trimmedValue.includes("://")
+    ? `http://${trimmedValue}`
+    : trimmedValue;
+
+  try {
+    const parsedUrl = new URL(candidate);
+
+    if (!HTTP_PROTOCOLS.has(parsedUrl.protocol)) {
+      return null;
+    }
+
+    return parsedUrl.href;
+  } catch (error) {
+    return null;
+  }
+}
+
+function normalizeStoredMapping(mapping) {
+  const source = normalizeUrl(mapping?.source, { allowBareHost: true });
+  const target = normalizeUrl(mapping?.target);
+
+  if (!source || !target || source === target) {
+    return null;
+  }
+
+  return { source, target };
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function toRedirectMatchUrl(source) {
+  try {
+    const parsedUrl = new URL(source);
+    parsedUrl.hash = "";
+    return parsedUrl.href;
+  } catch (error) {
+    return source;
+  }
+}
+
+function buildRedirectRule(mapping, index) {
+  const source = toRedirectMatchUrl(mapping.source);
+
+  return {
+    id: REDIRECT_RULE_ID_START + index,
+    priority: 1,
+    action: {
+      type: "redirect",
+      redirect: {
+        url: mapping.target,
+      },
+    },
+    condition: {
+      regexFilter: `^${escapeRegex(source)}$`,
+      resourceTypes: ["main_frame"],
+    },
+  };
 }
 
 function toRecentTab(tab) {
@@ -52,6 +127,34 @@ async function getStoredRecentTabs() {
   const recentTabs = stored[RECENT_TABS_KEY];
 
   return Array.isArray(recentTabs) ? recentTabs : [];
+}
+
+async function getStoredUrlMappings() {
+  const stored = await chrome.storage.local.get(URL_MAPPINGS_KEY);
+  const urlMappings = stored[URL_MAPPINGS_KEY];
+
+  if (!Array.isArray(urlMappings)) {
+    return [];
+  }
+
+  return urlMappings
+    .map((mapping) => normalizeStoredMapping(mapping))
+    .filter(Boolean);
+}
+
+async function syncRedirectRules() {
+  const [urlMappings, dynamicRules] = await Promise.all([
+    getStoredUrlMappings(),
+    chrome.declarativeNetRequest.getDynamicRules(),
+  ]);
+  const nextRules = urlMappings.map((mapping, index) =>
+    buildRedirectRule(mapping, index)
+  );
+
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: dynamicRules.map((rule) => rule.id),
+    addRules: nextRules,
+  });
 }
 
 async function saveRecentTabs(recentTabs) {
@@ -189,14 +292,24 @@ async function rememberFocusedWindowTab(windowId) {
 
 chrome.runtime.onInstalled.addListener(() => {
   void seedRecentTabsFromOpenTabs();
+  void syncRedirectRules();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   void seedRecentTabsFromOpenTabs();
+  void syncRedirectRules();
 });
 
-chrome.action.onClicked.addListener((tab) => {
-  void switchToPreviousTab(tab);
+chrome.runtime.onMessage.addListener((message) => {
+  if (message?.type === "switch-to-previous-tab") {
+    void switchToPreviousTab();
+  }
+});
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command === "switch-to-previous-tab") {
+    void switchToPreviousTab();
+  }
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
@@ -209,4 +322,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
   void rememberFocusedWindowTab(windowId);
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local" && changes[URL_MAPPINGS_KEY]) {
+    void syncRedirectRules();
+  }
 });
