@@ -3,6 +3,7 @@ const URL_MAPPINGS_KEY = "urlMappings";
 const MAX_RECENT_TABS = 2;
 const HTTP_PROTOCOLS = new Set(["http:", "https:"]);
 const REDIRECT_RULE_ID_START = 1;
+const BLANK_URL = "about:blank";
 
 function isValidTabId(tabId) {
   return Number.isInteger(tabId) && tabId >= 0;
@@ -95,6 +96,43 @@ function toRecentTab(tab) {
   };
 }
 
+async function shouldIgnoreRecentTab(tab) {
+  if (tab?.url !== BLANK_URL) {
+    return false;
+  }
+
+  try {
+    const tabsInWindow = await chrome.tabs.query({ windowId: tab.windowId });
+    return tabsInWindow.length === 1;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function filterEligibleRecentTabs(recentTabs) {
+  const exclusionChecks = await Promise.all(
+    recentTabs.map(async (entry) => {
+      if (!isValidTabId(entry?.tabId)) {
+        return { entry, isExcluded: false };
+      }
+
+      try {
+        const tab = await chrome.tabs.get(entry.tabId);
+        return {
+          entry,
+          isExcluded: await shouldIgnoreRecentTab(tab),
+        };
+      } catch (error) {
+        return { entry, isExcluded: false };
+      }
+    })
+  );
+
+  return exclusionChecks
+    .filter(({ isExcluded }) => !isExcluded)
+    .map(({ entry }) => entry);
+}
+
 function buildRecentTabs(recentTabs, tab) {
   const currentEntry = toRecentTab(tab);
   const nextRecentTabs = [];
@@ -126,7 +164,9 @@ async function getStoredRecentTabs() {
   const stored = await chrome.storage.session.get(RECENT_TABS_KEY);
   const recentTabs = stored[RECENT_TABS_KEY];
 
-  return Array.isArray(recentTabs) ? recentTabs : [];
+  return Array.isArray(recentTabs)
+    ? filterEligibleRecentTabs(recentTabs)
+    : [];
 }
 
 async function getStoredUrlMappings() {
@@ -164,6 +204,10 @@ async function saveRecentTabs(recentTabs) {
 }
 
 async function rememberTab(tab) {
+  if (await shouldIgnoreRecentTab(tab)) {
+    return getStoredRecentTabs();
+  }
+
   const recentTabs = await getStoredRecentTabs();
   const nextRecentTabs = buildRecentTabs(recentTabs, tab);
 
@@ -176,8 +220,19 @@ async function rememberTab(tab) {
 
 async function seedRecentTabsFromOpenTabs() {
   const allTabs = await chrome.tabs.query({});
-  const recentTabs = allTabs
-    .filter((tab) => isValidTabId(tab.id) && isValidWindowId(tab.windowId))
+  const candidateTabs = await Promise.all(
+    allTabs.map(async (tab) => ({
+      tab,
+      isExcluded: await shouldIgnoreRecentTab(tab),
+    }))
+  );
+  const recentTabs = candidateTabs
+    .filter(({ tab, isExcluded }) => (
+      !isExcluded &&
+      isValidTabId(tab.id) &&
+      isValidWindowId(tab.windowId)
+    ))
+    .map(({ tab }) => tab)
     .sort((left, right) => (right.lastAccessed ?? 0) - (left.lastAccessed ?? 0))
     .map((tab) => ({
       tabId: tab.id,

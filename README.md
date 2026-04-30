@@ -25,7 +25,9 @@ shortcut URL redirects.
 3. Set a shortcut for `Switch to the other recent tab`.
 
 Clicking the extension icon opens the popup menu. The recent-tab behavior is
-still available through the keyboard shortcut.
+still available through the keyboard shortcut. Single-tab `about:blank` windows
+are ignored so floating picture-in-picture surfaces are not treated as recent
+tabs.
 
 ## Add shortcut URL mappings
 
