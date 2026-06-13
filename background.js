@@ -1,5 +1,6 @@
 const RECENT_TABS_KEY = "recentTabs";
 const URL_MAPPINGS_KEY = "urlMappings";
+const URL_MAPPINGS_STORAGE_AREA = "sync";
 const MAX_RECENT_TABS = 2;
 const HTTP_PROTOCOLS = new Set(["http:", "https:"]);
 const REDIRECT_RULE_ID_START = 1;
@@ -169,8 +170,8 @@ async function getStoredRecentTabs() {
     : [];
 }
 
-async function getStoredUrlMappings() {
-  const stored = await chrome.storage.local.get(URL_MAPPINGS_KEY);
+async function getStoredUrlMappingsFrom(areaName) {
+  const stored = await chrome.storage[areaName].get(URL_MAPPINGS_KEY);
   const urlMappings = stored[URL_MAPPINGS_KEY];
 
   if (!Array.isArray(urlMappings)) {
@@ -180,6 +181,25 @@ async function getStoredUrlMappings() {
   return urlMappings
     .map((mapping) => normalizeStoredMapping(mapping))
     .filter(Boolean);
+}
+
+async function getStoredUrlMappings() {
+  return getStoredUrlMappingsFrom(URL_MAPPINGS_STORAGE_AREA);
+}
+
+async function migrateUrlMappingsToSyncStorage() {
+  const [syncedMappings, localMappings] = await Promise.all([
+    getStoredUrlMappingsFrom(URL_MAPPINGS_STORAGE_AREA),
+    getStoredUrlMappingsFrom("local"),
+  ]);
+
+  if (syncedMappings.length > 0 || localMappings.length === 0) {
+    return;
+  }
+
+  await chrome.storage[URL_MAPPINGS_STORAGE_AREA].set({
+    [URL_MAPPINGS_KEY]: localMappings,
+  });
 }
 
 async function syncRedirectRules() {
@@ -345,14 +365,20 @@ async function rememberFocusedWindowTab(windowId) {
   }
 }
 
+async function initializeExtension() {
+  await migrateUrlMappingsToSyncStorage();
+  await Promise.all([
+    seedRecentTabsFromOpenTabs(),
+    syncRedirectRules(),
+  ]);
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  void seedRecentTabsFromOpenTabs();
-  void syncRedirectRules();
+  void initializeExtension();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  void seedRecentTabsFromOpenTabs();
-  void syncRedirectRules();
+  void initializeExtension();
 });
 
 chrome.runtime.onMessage.addListener((message) => {
@@ -380,7 +406,7 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes[URL_MAPPINGS_KEY]) {
+  if (areaName === URL_MAPPINGS_STORAGE_AREA && changes[URL_MAPPINGS_KEY]) {
     void syncRedirectRules();
   }
 });

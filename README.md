@@ -40,7 +40,19 @@ tabs.
 
 When Chrome navigates to an exact matching shortcut URL, the extension rewrites
 that top-level navigation to the saved destination URL. Mappings can be deleted
-from the same popup.
+from the same popup. URL mappings use Chrome sync storage, so they follow the
+signed-in Chrome profile across computers when extension sync is enabled.
+
+## Package for Chrome Web Store
+
+```sh
+rm -rf dist/chrome-store
+mkdir -p dist/chrome-store
+rsync -av --exclude='.git' --exclude='dist' ./ dist/chrome-store/
+node -e 'const fs=require("fs"); const m=require("./manifest.json"); delete m.key; fs.writeFileSync("dist/chrome-store/manifest.json", JSON.stringify(m,null,2)+"\n")'
+cd dist/chrome-store
+zip -r ../alt-tab-1.1.0.zip .
+```
 
 ## License
 

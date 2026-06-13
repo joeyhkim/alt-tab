@@ -4,6 +4,12 @@
   "version": "1.1.0",
   "description": "Switch between recent tabs and manage shortcut URL redirects.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArcW8RpdWupAplaVpywvq1XhdQ/sfOlbRudCmPpQbXSPrvXBJrTYZKnRuZLFfw/9/1Jjztsh8d3kWa2Rn6xS36m6/VVYw4BP4Mf8QwdT+pGhP+BteOuie2k6DuOlu5G1gpeMRu6X0eYeZkxovuubg5bSLVtaGhl/IsLXzT8GViTyigZcE03RB6YpGE78MR2auSJoBJZL21RkYPU36rs7y7fuwJ9pddn+3I0nd9kN1d4kKNAt1jTny/2rKrsvYOe8Ay7Vew9nXDX08kZ5707scIu6rsGj0T4RSTZg16LvUw7rLzMs7LKuat4OdBZQ+FPw26MX6ADuRi7le6PYHkUwyKQIDAQAB",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": [
     "storage",
     "tabs",
@@ -17,7 +23,13 @@
   },
   "action": {
     "default_title": "Open Alt Tab menu",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "commands": {
     "_execute_action": {},

@@ -1,4 +1,5 @@
 const URL_MAPPINGS_KEY = "urlMappings";
+const URL_MAPPINGS_STORAGE_AREA = "sync";
 const HTTP_PROTOCOLS = new Set(["http:", "https:"]);
 
 const form = document.getElementById("mapping-form");
@@ -84,7 +85,7 @@ function formatShortcutSource(sourceUrl) {
 }
 
 async function getStoredMappings() {
-  const stored = await chrome.storage.local.get(URL_MAPPINGS_KEY);
+  const stored = await chrome.storage[URL_MAPPINGS_STORAGE_AREA].get(URL_MAPPINGS_KEY);
   const mappings = stored[URL_MAPPINGS_KEY];
 
   if (!Array.isArray(mappings)) {
@@ -102,7 +103,7 @@ async function getStoredMappings() {
 }
 
 async function saveMappings(mappings) {
-  await chrome.storage.local.set({
+  await chrome.storage[URL_MAPPINGS_STORAGE_AREA].set({
     [URL_MAPPINGS_KEY]: mappings,
   });
 }
@@ -239,7 +240,7 @@ mappingsList.addEventListener("click", async (event) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes[URL_MAPPINGS_KEY]) {
+  if (areaName === URL_MAPPINGS_STORAGE_AREA && changes[URL_MAPPINGS_KEY]) {
     void renderMappings();
   }
 });
